@@ -19,6 +19,7 @@ namespace RoadMap
         private double sizeFactorX = 1;
         private double sizeFactorY = 1;
 
+
         public MainWindow()
         {
             InitializeComponent();
