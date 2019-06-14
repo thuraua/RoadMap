@@ -14,14 +14,15 @@ namespace RoadMap
     public partial class MainWindow : Window
     {
         private Database db;
-        private IList<Street> teilstrecken;
-        private IDictionary<Street, Line> keyValuePairs = new Dictionary<Street, Line>();
+        private IList<Street> streets;
+        private IDictionary<string, Line> streetToLineMapping = new Dictionary<string, Line>();
         private ObservableCollection<Transport> obsTransports = new ObservableCollection<Transport>();
-        private ObservableCollection<Route> obsRouten = new ObservableCollection<Route>();
-        private IList<Line> teilstreckesOfSelectedTransport = new List<Line>();
+        private ObservableCollection<Route> obsRoutes = new ObservableCollection<Route>();
+        private ObservableCollection<Street> obsStreets = new ObservableCollection<Street>();
+        private IList<Line> streetsOfSelectedTransport = new List<Line>();
+        private IList<Street> highlightedStreets = new List<Street>();
         private double sizeFactorX = 1;
         private double sizeFactorY = 1;
-
 
         public MainWindow()
         {
@@ -29,12 +30,13 @@ namespace RoadMap
             try
             {
                 db = Database.GetInstance();
-                teilstrecken = db.GetStreets();
-                DrawTeilstrecken();
+                streets = db.GetStreets();
+                DrawStreets();
                 dgTransports.ItemsSource = obsTransports;
-                dgRoutes.ItemsSource = obsRouten;
+                dgRoutes.ItemsSource = obsRoutes;
+                dgStreets.ItemsSource = obsStreets;
                 foreach (Transport transport in db.ReadTransports()) { obsTransports.Add(transport); }
-                foreach (Route route in db.GetRoutes()) { obsRouten.Add(route); }
+                foreach (Route route in db.GetRoutes()) { obsRoutes.Add(route); }
             }
             catch (Exception ex)
             {
@@ -42,28 +44,29 @@ namespace RoadMap
             }
         }
 
-        private void DrawTeilstrecken()
+        private void DrawStreets()
         {
             if (cvMap.ActualWidth != 0 && cvMap.ActualHeight != 0)
             {
                 cvMap.Children.Clear();
-                foreach (Street teilstrecke in teilstrecken)
+                foreach (Street street in streets)
                 {
                     Line line = new Line();
-                    if (teilstrecke.vonOrt.StartsWith("A"))
+                    if (street.From.StartsWith("A"))
                         line.Stroke = Brushes.Red;
-                    else if (teilstrecke.vonOrt.StartsWith("B"))
+                    else if (street.From.StartsWith("B"))
                         line.Stroke = Brushes.Blue;
                     else
                         line.Stroke = Brushes.Green;
                     sizeFactorX = cvMap.ActualWidth / 60000.0;
                     sizeFactorY = cvMap.ActualHeight / 30000.0;
-                    line.X1 = teilstrecke.vonPoint.X * sizeFactorX;
-                    line.X2 = teilstrecke.bisPoint.X * sizeFactorX;
-                    line.Y1 = teilstrecke.vonPoint.Y * sizeFactorY;
-                    line.Y2 = teilstrecke.bisPoint.Y * sizeFactorY;
-                    line.StrokeThickness = 2;
+                    line.X1 = street.FromPoint.X * sizeFactorX;
+                    line.X2 = street.ToPoint.X * sizeFactorX;
+                    line.Y1 = cvMap.ActualHeight - street.FromPoint.Y * sizeFactorY;
+                    line.Y2 = cvMap.ActualHeight - street.ToPoint.Y * sizeFactorY;
+                    line.StrokeThickness = 1;
                     cvMap.Children.Add(line);
+                    streetToLineMapping.Add(street.ID, line);
                 }
             }
         }
@@ -71,7 +74,8 @@ namespace RoadMap
         private void CvMap_MouseMove(object sender, MouseEventArgs e)
         {
             Point p = Mouse.GetPosition(cvMap);
-            Console.WriteLine("X: " + (int)(p.X / sizeFactorX) + ", Y: " + (int)(p.Y / sizeFactorX));
+            lblDistance.Content = "X: " + (int)(p.X / sizeFactorX) + ", Y: " + (int)(30000 - p.Y / sizeFactorY);
+            Console.WriteLine("X: " + (int)(p.X / sizeFactorX) + ", Y: " + (int)(cvMap.ActualHeight - p.Y / sizeFactorY));
         }
 
         private void CvMap_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
@@ -83,8 +87,8 @@ namespace RoadMap
         {
             cvMap.Width = (border.ActualWidth < border.ActualHeight * 2 ? border.ActualWidth : border.ActualHeight * 2) - 20;
             cvMap.Height = (border.ActualHeight * 2 < border.ActualWidth ? border.ActualHeight : border.ActualWidth / 2) - 20;
-            if (teilstrecken != null)
-                DrawTeilstrecken();
+            if (streets != null)
+                DrawStreets();
         }
 
         private void DgTransports_SelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
@@ -93,37 +97,33 @@ namespace RoadMap
             if (selectedTransport != null)
             {
                 double distance;
-                IList<Street> teilstrecken = db.ReadTeilstreckenOfTransport(selectedTransport, out distance);
+                IList<Street> streets = db.GetStreetsOfTransport(selectedTransport, out distance);
                 lblDistance.Content = distance;
-                DrawTeilstreckenOfTransport(teilstrecken);
+                DrawStreetsOfTransport(streets);
             }
         }
 
-        private void DrawTeilstreckenOfTransport(IList<Street> teilstrecken)
+        private void DrawStreetsOfTransport(IList<Street> streets)
         {
-            foreach (Line line in teilstreckesOfSelectedTransport) { cvMap.Children.Remove(line); }
-            teilstreckesOfSelectedTransport.Clear();
-            foreach (Street teilstrecke in teilstrecken)
+            foreach (Line line in streetsOfSelectedTransport) { cvMap.Children.Remove(line); }
+            MessageBox.Show(streets.Count + " streets affected");
+            streetsOfSelectedTransport.Clear();
+            foreach (Street street in streets)
             {
                 Line line = new Line();
                 line.Stroke = Brushes.Pink;
                 sizeFactorX = cvMap.ActualWidth / 60000.0;
                 sizeFactorY = cvMap.ActualHeight / 30000.0;
-                line.X1 = teilstrecke.vonPoint.X * sizeFactorX;
-                line.X2 = teilstrecke.bisPoint.X * sizeFactorX;
-                line.Y1 = teilstrecke.vonPoint.Y * sizeFactorY;
-                line.Y2 = teilstrecke.bisPoint.Y * sizeFactorY;
+                line.X1 = street.FromPoint.X * sizeFactorX;
+                line.X2 = street.ToPoint.X * sizeFactorX;
+                line.Y1 = street.FromPoint.Y * sizeFactorY;
+                line.Y2 = street.ToPoint.Y * sizeFactorY;
                 line.StrokeThickness = 4;
-                teilstreckesOfSelectedTransport.Add(line);
+                streetsOfSelectedTransport.Add(line);
                 cvMap.Children.Add(line);
             }
         }
 
-        /// <summary>
-        /// Creates new transport
-        /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
         private void Button_Click(object sender, RoutedEventArgs e)
         {
             try
@@ -131,6 +131,7 @@ namespace RoadMap
                 var selectedRoute = (Route)dgRoutes.SelectedItem;
                 if (selectedRoute == null) throw new Exception("Please select a route");
                 db.AddTransport(selectedRoute);
+                foreach (Transport transport in db.ReadTransports()) { obsTransports.Add(transport); }
             }
             catch (Exception ex)
             {
@@ -150,6 +151,40 @@ namespace RoadMap
             {
                 MessageBox.Show(ex.Message);
             }
+        }
+
+        private void BtnReconnect_Click(object sender, RoutedEventArgs e)
+        {
+
+        }
+
+        private void DgStreets_SelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
+        {
+            Street selectedStreet = (Street)dgStreets.SelectedItem;
+            IList<Street> streets = new List<Street>();
+            streets.Add(selectedStreet);
+            ToggleStreetsHighlighting(streets);
+        }
+
+        private void DgRoutes_SelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
+        {
+            Route selectedRoute = (Route)dgRoutes.SelectedItem;
+            IList<Street> streets = db.GetStreetsOfRoute(selectedRoute);
+            ToggleStreetsHighlighting(streets);
+            obsStreets.Clear();
+            foreach (Street street in streets) obsStreets.Add(street);
+        }
+
+        private void ToggleStreetsHighlighting(IList<Street> streets)
+        {
+            foreach (Street street in highlightedStreets) streetToLineMapping[street.ID].StrokeThickness = 1;
+            highlightedStreets.Clear();
+            foreach (Street street in streets)
+            {
+                highlightedStreets.Add(street);
+                streetToLineMapping[street.ID].StrokeThickness = 3;
+            }
+
         }
     }
 }

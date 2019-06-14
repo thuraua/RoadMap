@@ -2,38 +2,53 @@
 
 namespace RoadMap
 {
+    /// <summary>
+    /// Represents table 'Teilstrecke'
+    /// </summary>
     public class Street
     {
         public string ID { get; set; }
-        public string vonOrt { get; set; }
-        public string bisOrt { get; set; }
-        public int transportNr { get; set; }
-        public Point vonPoint { get; set; }
-        public Point bisPoint { get; set; }
+        public string From { get; set; }
+        public string To { get; set; }
+        public int TransportNr { get; set; }
+        public Point FromPoint { get; set; }
+        public Point ToPoint { get; set; }
 
-        public Street(string iD, string vonOrt, string bisOrt, int transportNr, Point vonPoint, Point bisPoint)
+        /// <summary>
+        /// Full constructor, required for drawing
+        /// </summary>
+        /// <param name="id"></param>
+        /// <param name="from"></param>
+        /// <param name="to"></param>
+        /// <param name="transportNr"></param>
+        /// <param name="fromPoint"></param>
+        /// <param name="toPoint"></param>
+        public Street(string id, string from, string to, int transportNr, Point fromPoint, Point toPoint)
         {
-            ID = iD;
-            this.vonOrt = vonOrt;
-            this.bisOrt = bisOrt;
-            this.transportNr = transportNr;
-            this.vonPoint = vonPoint;
-            this.bisPoint = bisPoint;
+            ID = id;
+            From = from;
+            To = to;
+            TransportNr = transportNr;
+            FromPoint = fromPoint;
+            ToPoint = toPoint;
+        }
+
+        /// <summary>
+        /// Lite constructor, only for street highlighting and description in datagrid
+        /// </summary>
+        /// <param name="id"></param>
+        /// <param name="from"></param>
+        /// <param name="to"></param>
+        public Street(string id, string from, string to)
+        {
+            ID = id;
+            From = from;
+            To = to;
         }
 
         public override string ToString()
         {
-            return base.ToString();
-        }
-
-        public override bool Equals(object obj)
-        {
-            return base.Equals(obj);
-        }
-
-        public override int GetHashCode()
-        {
-            return base.GetHashCode();
+            return ID + ", From: " + From + ", To:" + To;
         }
     }
 }

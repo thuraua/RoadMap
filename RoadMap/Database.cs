@@ -7,15 +7,16 @@ namespace RoadMap
 {
     public class Database
     {
-        public string IP { get; } = "192.168.128.152"; //"212.152.179.117" "192.168.128.152"
+        public string IP { get; } = "212.152.179.117"; //"212.152.179.117" "192.168.128.152"
         private OracleConnection connection;
         private static Database database;
         private OracleCommand cmd;
         private OracleTransaction trx;
         private readonly string StreetsSelect = "SELECT teilstrecke.ID, von_Ort, bis_Ort, transportnr, t.X, t.Y FROM teilstrecke, TABLE(SDO_UTIL.GETVERTICES(street)) t";
-        private readonly string TeilstreckenOfTransportSelect = "SELECT teilstrecke.ID, von_Ort, bis_Ort, transportnr, t.X, t.Y FROM teilstrecke, TABLE(SDO_UTIL.GETVERTICES(street)) t WHERE transportnr = :tnr ";
-        private readonly string TransporteSelect = "SELECT tnr, rstatus, transport.rid, abschnitt_bezeichnung FROM transport INNER JOIN route ON transport.rid = route.RID";
-        private readonly string RoutenSelect = "select distinct rid1, route.ABSCHNITT_BEZEICHNUNG from routennetz INNER JOIN route on route.RID = routennetz.RID1";
+        private readonly string StreetsOfRouteSelect = "SELECT rid2 id, teilstrecke.von_ort von, teilstrecke.bis_ort bis FROM routennetz LEFT JOIN teilstrecke ON routennetz.rid2 = teilstrecke.id WHERE connect_by_isleaf = 1 connect by prior rid2 = rid1 start with rid1 = :rid";
+        private readonly string StreetsOfTransportSelect = "SELECT teilstrecke.ID, von_Ort, bis_Ort, transportnr, t.X, t.Y FROM teilstrecke, TABLE(SDO_UTIL.GETVERTICES(street)) t WHERE transportnr = :tnr ";
+        private readonly string TransportsSelect = "SELECT tnr, rstatus, transport.rid, abschnitt_bezeichnung FROM transport INNER JOIN route ON transport.rid = route.RID";
+        //private readonly string RoutesSelect = "select distinct rid1, route.ABSCHNITT_BEZEICHNUNG from routennetz INNER JOIN route on route.RID = routennetz.RID1";
 
         private Database()
         {
@@ -36,10 +37,48 @@ namespace RoadMap
             return database;
         }
 
+        public IList<Street> GetStreets()
+        {
+            SortedList<string, Street> streets = new SortedList<string, Street>();
+            OracleCommand cmd = new OracleCommand(StreetsSelect, connection);
+            OracleDataReader reader = cmd.ExecuteReader();
+            if (reader.HasRows)
+                while (reader.Read())
+                {
+                    string id = reader["id"].ToString();
+                    string von_Ort = reader["von_Ort"].ToString();
+                    string bis_Ort = reader["bis_Ort"].ToString();
+                    int transportnr = Convert.ToInt32(reader["transportnr"].ToString() == "" ? "0" : reader["transportnr"].ToString());
+                    Point givenPoint = new Point(Convert.ToDouble(reader["X"]), Convert.ToDouble(reader["Y"]));
+                    if (!streets.ContainsKey(id))
+                        streets.Add(id, new Street(id, von_Ort, bis_Ort, transportnr, givenPoint, givenPoint));
+                    else
+                        streets[id].ToPoint = givenPoint;
+                }
+            return streets.Values;
+        }
+
+        public IList<Street> GetStreetsOfRoute(Route route)
+        {
+            IList<Street> streets = new List<Street>();
+            OracleCommand cmd = new OracleCommand(StreetsOfRouteSelect, connection);
+            cmd.Parameters.Add("rid", route.RID);
+            OracleDataReader reader = cmd.ExecuteReader();
+            if (reader.HasRows)
+                while (reader.Read())
+                {
+                    string id = reader["id"].ToString();
+                    string von_Ort = reader["von"].ToString();
+                    string bis_Ort = reader["bis"].ToString();
+                    streets.Add(new Street(id, von_Ort, bis_Ort));
+                }
+            return streets;
+        }
+
         public IList<Transport> ReadTransports()
         {
             IList<Transport> transports = new List<Transport>();
-            OracleCommand cmd = new OracleCommand(TransporteSelect, connection);
+            OracleCommand cmd = new OracleCommand(TransportsSelect, connection);
             OracleDataReader reader = cmd.ExecuteReader();
             if (reader.HasRows)
                 while (reader.Read())
@@ -53,26 +92,7 @@ namespace RoadMap
             return transports;
         }
 
-        public IList<Street> GetStreets()
-        {
-            SortedList<string, Street> teilstreckes = new SortedList<string, Street>();
-            OracleCommand cmd = new OracleCommand(StreetsSelect, connection);
-            OracleDataReader reader = cmd.ExecuteReader();
-            if (reader.HasRows)
-                while (reader.Read())
-                {
-                    string id = reader["id"].ToString();
-                    string von_Ort = reader["von_Ort"].ToString();
-                    string bis_Ort = reader["bis_Ort"].ToString();
-                    int transportnr = Convert.ToInt32(reader["transportnr"].ToString() == "" ? "0" : reader["transportnr"].ToString());
-                    Point givenPoint = new Point(Convert.ToDouble(reader["X"]), Convert.ToDouble(reader["Y"]));
-                    if (!teilstreckes.ContainsKey(id))
-                        teilstreckes.Add(id, new Street(id, von_Ort, bis_Ort, transportnr, givenPoint, givenPoint));
-                    else
-                        teilstreckes[id].bisPoint = givenPoint;
-                }
-            return teilstreckes.Values;
-        }
+
 
         public Route getRoute(string rid)
         {
@@ -237,11 +257,11 @@ namespace RoadMap
             return database;
         }
 
-        public IList<Street> ReadTeilstreckenOfTransport(Transport selectedTransport, out double distance)
+        public IList<Street> GetStreetsOfTransport(Transport selectedTransport, out double distance)
         {
             SortedList<string, Street> teilstreckes = new SortedList<string, Street>();
             distance = 0;
-            OracleCommand cmd = new OracleCommand(TeilstreckenOfTransportSelect, connection);
+            OracleCommand cmd = new OracleCommand(StreetsOfTransportSelect, connection);
             cmd.Parameters.Add(new OracleParameter("tnr", selectedTransport.TNR));
             OracleDataReader reader = cmd.ExecuteReader();
             if (reader.HasRows)
@@ -255,12 +275,12 @@ namespace RoadMap
                     if (!teilstreckes.ContainsKey(id))
                         teilstreckes.Add(id, new Street(id, von_Ort, bis_Ort, transportnr, givenPoint, givenPoint));
                     else
-                        teilstreckes[id].bisPoint = givenPoint;
+                        teilstreckes[id].ToPoint = givenPoint;
                 }
             foreach (Street teilstrecke in teilstreckes.Values)
             {
-                double distanceX = teilstrecke.bisPoint.X - teilstrecke.vonPoint.X < 0 ? (teilstrecke.bisPoint.X - teilstrecke.vonPoint.X) * (-1) : (teilstrecke.bisPoint.X - teilstrecke.vonPoint.X);
-                double distanceY = teilstrecke.bisPoint.Y - teilstrecke.vonPoint.Y < 0 ? (teilstrecke.bisPoint.Y - teilstrecke.vonPoint.Y) * (-1) : (teilstrecke.bisPoint.Y - teilstrecke.vonPoint.Y);
+                double distanceX = teilstrecke.ToPoint.X - teilstrecke.FromPoint.X < 0 ? (teilstrecke.ToPoint.X - teilstrecke.FromPoint.X) * (-1) : (teilstrecke.ToPoint.X - teilstrecke.FromPoint.X);
+                double distanceY = teilstrecke.ToPoint.Y - teilstrecke.FromPoint.Y < 0 ? (teilstrecke.ToPoint.Y - teilstrecke.FromPoint.Y) * (-1) : (teilstrecke.ToPoint.Y - teilstrecke.FromPoint.Y);
                 distance = Math.Sqrt(distanceX * distanceX + distanceY * distanceY);
             }
             return teilstreckes.Values;
