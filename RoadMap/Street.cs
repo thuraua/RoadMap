@@ -2,7 +2,7 @@
 
 namespace RoadMap
 {
-    public class Teilstrecke
+    public class Street
     {
         public string ID { get; set; }
         public string vonOrt { get; set; }
@@ -11,7 +11,7 @@ namespace RoadMap
         public Point vonPoint { get; set; }
         public Point bisPoint { get; set; }
 
-        public Teilstrecke(string iD, string vonOrt, string bisOrt, int transportNr, Point vonPoint, Point bisPoint)
+        public Street(string iD, string vonOrt, string bisOrt, int transportNr, Point vonPoint, Point bisPoint)
         {
             ID = iD;
             this.vonOrt = vonOrt;

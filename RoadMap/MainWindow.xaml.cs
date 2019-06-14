@@ -14,8 +14,11 @@ namespace RoadMap
     public partial class MainWindow : Window
     {
         private Database db;
-        private IList<Teilstrecke> teilstrecken;
+        private IList<Street> teilstrecken;
+        private IDictionary<Street, Line> keyValuePairs = new Dictionary<Street, Line>();
         private ObservableCollection<Transport> obsTransports = new ObservableCollection<Transport>();
+        private ObservableCollection<Route> obsRouten = new ObservableCollection<Route>();
+        private IList<Line> teilstreckesOfSelectedTransport = new List<Line>();
         private double sizeFactorX = 1;
         private double sizeFactorY = 1;
 
@@ -26,10 +29,12 @@ namespace RoadMap
             try
             {
                 db = Database.GetInstance();
-                teilstrecken = db.ReadTeilstrecken();
+                teilstrecken = db.GetStreets();
                 DrawTeilstrecken();
                 dgTransports.ItemsSource = obsTransports;
+                dgRoutes.ItemsSource = obsRouten;
                 foreach (Transport transport in db.ReadTransports()) { obsTransports.Add(transport); }
+                foreach (Route route in db.GetRoutes()) { obsRouten.Add(route); }
             }
             catch (Exception ex)
             {
@@ -42,7 +47,7 @@ namespace RoadMap
             if (cvMap.ActualWidth != 0 && cvMap.ActualHeight != 0)
             {
                 cvMap.Children.Clear();
-                foreach (Teilstrecke teilstrecke in teilstrecken)
+                foreach (Street teilstrecke in teilstrecken)
                 {
                     Line line = new Line();
                     if (teilstrecke.vonOrt.StartsWith("A"))
@@ -80,6 +85,71 @@ namespace RoadMap
             cvMap.Height = (border.ActualHeight * 2 < border.ActualWidth ? border.ActualHeight : border.ActualWidth / 2) - 20;
             if (teilstrecken != null)
                 DrawTeilstrecken();
+        }
+
+        private void DgTransports_SelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
+        {
+            Transport selectedTransport = (Transport)dgTransports.SelectedItem;
+            if (selectedTransport != null)
+            {
+                double distance;
+                IList<Street> teilstrecken = db.ReadTeilstreckenOfTransport(selectedTransport, out distance);
+                lblDistance.Content = distance;
+                DrawTeilstreckenOfTransport(teilstrecken);
+            }
+        }
+
+        private void DrawTeilstreckenOfTransport(IList<Street> teilstrecken)
+        {
+            foreach (Line line in teilstreckesOfSelectedTransport) { cvMap.Children.Remove(line); }
+            teilstreckesOfSelectedTransport.Clear();
+            foreach (Street teilstrecke in teilstrecken)
+            {
+                Line line = new Line();
+                line.Stroke = Brushes.Pink;
+                sizeFactorX = cvMap.ActualWidth / 60000.0;
+                sizeFactorY = cvMap.ActualHeight / 30000.0;
+                line.X1 = teilstrecke.vonPoint.X * sizeFactorX;
+                line.X2 = teilstrecke.bisPoint.X * sizeFactorX;
+                line.Y1 = teilstrecke.vonPoint.Y * sizeFactorY;
+                line.Y2 = teilstrecke.bisPoint.Y * sizeFactorY;
+                line.StrokeThickness = 4;
+                teilstreckesOfSelectedTransport.Add(line);
+                cvMap.Children.Add(line);
+            }
+        }
+
+        /// <summary>
+        /// Creates new transport
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void Button_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                var selectedRoute = (Route)dgRoutes.SelectedItem;
+                if (selectedRoute == null) throw new Exception("Please select a route");
+                db.AddTransport(selectedRoute);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message);
+            }
+        }
+
+        private void BtnFinishTransport_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                var selectedTransport = (Transport)dgTransports.SelectedItem;
+                if (selectedTransport == null) throw new Exception("Please select a transport");
+                db.finishTransport(selectedTransport);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message);
+            }
         }
     }
 }

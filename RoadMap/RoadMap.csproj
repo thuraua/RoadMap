@@ -58,7 +58,8 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
-    <Compile Include="Teilstrecke.cs" />
+    <Compile Include="Route.cs" />
+    <Compile Include="Street.cs" />
     <Compile Include="Transport.cs" />
     <Page Include="MainWindow.xaml">
       <Generator>MSBuild:Compile</Generator>
