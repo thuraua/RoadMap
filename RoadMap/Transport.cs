@@ -6,7 +6,6 @@ namespace RoadMap
     public class Transport
     {
         public int TNR { get; set; }
-        //public string RID { get; set; }
         public Route Route { get; set; }
         public TransportStatus Status { get; set; }
 

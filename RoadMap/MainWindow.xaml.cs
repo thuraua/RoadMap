@@ -23,6 +23,8 @@ namespace RoadMap
         private IList<Street> highlightedStreets = new List<Street>();
         private double sizeFactorX = 1;
         private double sizeFactorY = 1;
+        private IList<Street> lockedStreets;
+        private Route lockedRoute;
 
         public MainWindow()
         {
@@ -35,7 +37,7 @@ namespace RoadMap
                 dgTransports.ItemsSource = obsTransports;
                 dgRoutes.ItemsSource = obsRoutes;
                 dgStreets.ItemsSource = obsStreets;
-                foreach (Transport transport in db.ReadTransports()) { obsTransports.Add(transport); }
+                foreach (Transport transport in db.GetTransports()) { obsTransports.Add(transport); }
                 foreach (Route route in db.GetRoutes()) { obsRoutes.Add(route); }
             }
             catch (Exception ex)
@@ -74,8 +76,7 @@ namespace RoadMap
         private void CvMap_MouseMove(object sender, MouseEventArgs e)
         {
             Point p = Mouse.GetPosition(cvMap);
-            lblDistance.Content = "X: " + (int)(p.X / sizeFactorX) + ", Y: " + (int)(30000 - p.Y / sizeFactorY);
-            Console.WriteLine("X: " + (int)(p.X / sizeFactorX) + ", Y: " + (int)(cvMap.ActualHeight - p.Y / sizeFactorY));
+            lblCvMapHoverInfo.Content = "X: " + (int)(p.X / sizeFactorX) + ", Y: " + (int)(30000 - p.Y / sizeFactorY);
         }
 
         private void CvMap_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
@@ -94,85 +95,49 @@ namespace RoadMap
         private void DgTransports_SelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
         {
             Transport selectedTransport = (Transport)dgTransports.SelectedItem;
-            if (selectedTransport != null)
+            dgRoutes.SelectedIndex = -1;
+            if (selectedTransport != null) //because executed at startup for some reason
             {
-                double distance;
-                IList<Street> streets = db.GetStreetsOfTransport(selectedTransport, out distance);
-                lblDistance.Content = distance;
-                DrawStreetsOfTransport(streets);
-            }
-        }
-
-        private void DrawStreetsOfTransport(IList<Street> streets)
-        {
-            foreach (Line line in streetsOfSelectedTransport) { cvMap.Children.Remove(line); }
-            MessageBox.Show(streets.Count + " streets affected");
-            streetsOfSelectedTransport.Clear();
-            foreach (Street street in streets)
-            {
-                Line line = new Line();
-                line.Stroke = Brushes.Pink;
-                sizeFactorX = cvMap.ActualWidth / 60000.0;
-                sizeFactorY = cvMap.ActualHeight / 30000.0;
-                line.X1 = street.FromPoint.X * sizeFactorX;
-                line.X2 = street.ToPoint.X * sizeFactorX;
-                line.Y1 = street.FromPoint.Y * sizeFactorY;
-                line.Y2 = street.ToPoint.Y * sizeFactorY;
-                line.StrokeThickness = 4;
-                streetsOfSelectedTransport.Add(line);
-                cvMap.Children.Add(line);
-            }
-        }
-
-        private void Button_Click(object sender, RoutedEventArgs e)
-        {
-            try
-            {
-                var selectedRoute = (Route)dgRoutes.SelectedItem;
-                if (selectedRoute == null) throw new Exception("Please select a route");
-                db.AddTransport(selectedRoute);
-                foreach (Transport transport in db.ReadTransports()) { obsTransports.Add(transport); }
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show(ex.Message);
-            }
-        }
-
-        private void BtnFinishTransport_Click(object sender, RoutedEventArgs e)
-        {
-            try
-            {
-                var selectedTransport = (Transport)dgTransports.SelectedItem;
-                if (selectedTransport == null) throw new Exception("Please select a transport");
-                db.finishTransport(selectedTransport);
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show(ex.Message);
+                IList<Street> streets = db.GetStreetsOfTransport(selectedTransport, out double distance);
+                lblDistance.Content = "Distance: " + Math.Floor(distance);
+                ToggleStreetsHighlighting(streets);
             }
         }
 
         private void BtnReconnect_Click(object sender, RoutedEventArgs e)
         {
-
+            try
+            {
+                db.IP = comboBox.SelectedIndex == 1 ? "212.152.179.117" : "192.168.128.152";
+                db.CreateConnection();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message);
+            }
         }
 
         private void DgStreets_SelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
         {
             Street selectedStreet = (Street)dgStreets.SelectedItem;
-            IList<Street> streets = new List<Street>();
-            streets.Add(selectedStreet);
-            ToggleStreetsHighlighting(streets);
+            if (selectedStreet != null)
+            {
+                IList<Street> streets = new List<Street>();
+                streets.Add(selectedStreet);
+                ToggleStreetsHighlighting(streets);
+            }
         }
 
         private void DgRoutes_SelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
         {
             Route selectedRoute = (Route)dgRoutes.SelectedItem;
-            IList<Street> streets = db.GetStreetsOfRoute(selectedRoute);
-            ToggleStreetsHighlighting(streets);
-            obsStreets.Clear();
-            foreach (Street street in streets) obsStreets.Add(street);
+            if (selectedRoute != null)
+            {
+                IList<Street> streets = db.GetStreetsOfRoute(selectedRoute);
+                ToggleStreetsHighlighting(streets);
+                obsStreets.Clear();
+                foreach (Street street in streets) obsStreets.Add(street);
+            }
         }
 
         private void ToggleStreetsHighlighting(IList<Street> streets)
@@ -184,7 +149,51 @@ namespace RoadMap
                 highlightedStreets.Add(street);
                 streetToLineMapping[street.ID].StrokeThickness = 3;
             }
+        }
 
+        private void BtnNewTransport_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                var selectedRoute = (Route)dgRoutes.SelectedItem;
+                if (selectedRoute == null) throw new Exception("Please select a route");
+                IList<Street> streetsToLock = db.GetStreetsOfRoute(selectedRoute);
+                db.TryLockStreets(streetsToLock);
+                btnNewTransport.IsEnabled = false;
+                btnCommit.IsEnabled = true;
+                lockedStreets = streetsToLock;
+                lockedRoute = selectedRoute;
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message);
+            }
+        }
+
+        private void BtnCommit_Click(object sender, RoutedEventArgs e)
+        {
+            btnNewTransport.IsEnabled = true;
+            btnCommit.IsEnabled = false;
+            db.InsertTransport(lockedStreets, lockedRoute);
+            obsTransports.Clear();
+            foreach (Transport transport in db.GetTransports()) { obsTransports.Add(transport); }
+        }
+
+        private void BtnFinishTransport_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                Transport selectedTransport = (Transport)dgTransports.SelectedItem;
+                if (selectedTransport == null) throw new Exception("Please select a transport");
+                if (selectedTransport.Status.Equals(TransportStatus.Completed)) throw new Exception("Transport already completed");
+                db.FinishTransport(selectedTransport, db.GetStreetsOfRoute(selectedTransport.Route));
+                obsTransports.Clear();
+                foreach (Transport transport in db.GetTransports()) { obsTransports.Add(transport); }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message);
+            }
         }
     }
 }

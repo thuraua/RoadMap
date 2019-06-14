@@ -21,16 +21,16 @@
         <Border x:Name="border" BorderBrush="Black" BorderThickness="1" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="10" Grid.ColumnSpan="2" Grid.Row="1">
             <Canvas x:Name="cvMap" VerticalAlignment="Stretch" HorizontalAlignment="Stretch" Margin="10" Background="#FFE4D8D8" MouseMove="CvMap_MouseMove" MouseLeftButtonDown="CvMap_MouseLeftButtonDown" RenderTransformOrigin="0.5,0.5"/>
         </Border>
-        <DataGrid x:Name="dgTransports" HorizontalAlignment="Stretch" Margin="10" VerticalAlignment="Stretch" ColumnWidth="*" SelectionChanged="DgTransports_SelectionChanged" Grid.Row="1" Grid.Column="2"/>
+        <DataGrid x:Name="dgTransports" HorizontalAlignment="Stretch" Margin="10" VerticalAlignment="Stretch" ColumnWidth="*" SelectionChanged="DgTransports_SelectionChanged" Grid.Row="1" Grid.Column="2" IsReadOnly="True"/>
         <DataGrid x:Name="dgRoutes" HorizontalAlignment="Stretch" Margin="10" VerticalAlignment="Stretch" AutoGenerateColumns="False" Grid.Row="2" SelectionChanged="DgRoutes_SelectionChanged" IsReadOnly="True">
             <DataGrid.Columns>
                 <DataGridTextColumn Header="RID" Width="*" Binding="{Binding RID}"/>
                 <DataGridTextColumn Header="Bezeichnung" Width="3*" Binding="{Binding AbschnittBezeichnung}"/>
             </DataGrid.Columns>
         </DataGrid>
-        <Label x:Name="lblDistance" Content="" HorizontalAlignment="Left" Margin="215,10,0,10" VerticalAlignment="Stretch" Width="263" Grid.ColumnSpan="2"/>
-        <Button x:Name="button" Content="New Transport" Grid.Column="2" HorizontalAlignment="Stretch" Margin="10,10,10,139" VerticalAlignment="Top" Click="Button_Click" Grid.Row="2"/>
-        <Button x:Name="btnFinishTransport" Content="Finish Transport" Grid.Column="2" HorizontalAlignment="Stretch" Margin="10,53,10,0" Grid.Row="2" VerticalAlignment="Top" Click="BtnFinishTransport_Click"/>
+        <Label x:Name="lblDistance" Content="" HorizontalAlignment="Stretch" Margin="10,10,9,10" VerticalAlignment="Stretch" Grid.Column="2"/>
+        <Button x:Name="btnNewTransport" Content="New Transport" Grid.Column="2" HorizontalAlignment="Stretch" Margin="10,10,10,139" VerticalAlignment="Top" Grid.Row="2" Click="BtnNewTransport_Click"/>
+        <Button x:Name="btnFinishTransport" Content="Finish Transport" Grid.Column="2" HorizontalAlignment="Stretch" Margin="10,60,10,0" Grid.Row="2" VerticalAlignment="Top" Click="BtnFinishTransport_Click"/>
         <DataGrid x:Name="dgStreets" Grid.Column="1" HorizontalAlignment="Stretch" Margin="10" Grid.Row="2" VerticalAlignment="Stretch" SelectionChanged="DgStreets_SelectionChanged" AutoGenerateColumns="False" IsReadOnly="True">
             <DataGrid.Columns>
                 <DataGridTextColumn Header="ID" Width="*" Binding="{Binding ID}"/>
@@ -43,5 +43,7 @@
             <RadioButton Content="Extern" IsChecked="True"/>
         </ComboBox>
         <Button x:Name="btnReconnect" Content="Reconnect" HorizontalAlignment="Left" Margin="135,10,0,0" VerticalAlignment="Top" Width="75" Height="25" Click="BtnReconnect_Click"/>
+        <Label x:Name="lblCvMapHoverInfo" Content="" Grid.Column="1" HorizontalAlignment="Stretch" Margin="15,10,10,0" VerticalAlignment="Top"/>
+        <Button x:Name="btnCommit" Content="Commit" Grid.Column="2" HorizontalAlignment="Stretch" Margin="10,35,10,0" Grid.Row="2" VerticalAlignment="Top" Click="BtnCommit_Click" IsEnabled="False"/>
     </Grid>
 </Window>
