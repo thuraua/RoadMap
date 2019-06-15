@@ -34,7 +34,7 @@ namespace RoadMap
                 dgTransports.ItemsSource = obsTransports;
                 dgRoutes.ItemsSource = obsRoutes;
                 dgStreets.ItemsSource = obsStreets;
-                ReloadAllData();
+                LoadAllData();
             }
             catch (Exception ex)
             {
@@ -42,7 +42,7 @@ namespace RoadMap
             }
         }
 
-        private void ReloadAllData()
+        private void LoadAllData()
         {
             allStreets = db.GetStreets();
             DrawStreets();
@@ -53,6 +53,7 @@ namespace RoadMap
             foreach (Route route in db.GetRoutes()) { obsRoutes.Add(route); }
         }
 
+        #region UI stuff
         private void DrawStreets()
         {
             if (cvMap.ActualWidth != 0 && cvMap.ActualHeight != 0)
@@ -81,6 +82,19 @@ namespace RoadMap
             }
         }
 
+        private void ToggleStreetsHighlighting(IList<Street> streets)
+        {
+            foreach (Street street in highlightedStreets) streetToLineMapping[street.ID].StrokeThickness = 1;
+            highlightedStreets.Clear();
+            foreach (Street street in streets)
+            {
+                highlightedStreets.Add(street);
+                streetToLineMapping[street.ID].StrokeThickness = 3;
+            }
+        } 
+        #endregion
+
+        #region CvMap resizement/dimensions
         private void CvMap_MouseMove(object sender, MouseEventArgs e)
         {
             Point p = Mouse.GetPosition(cvMap);
@@ -99,7 +113,9 @@ namespace RoadMap
             if (allStreets != null)
                 DrawStreets();
         }
+        #endregion
 
+        #region Datagrid SelectionChanged handlers
         private void DgTransports_SelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
         {
             Transport selectedTransport = (Transport)dgTransports.SelectedItem;
@@ -109,20 +125,6 @@ namespace RoadMap
                 IList<Street> streets = db.GetStreetsOfTransport(selectedTransport, out double distance);
                 lblDistance.Content = "Distance: " + Math.Floor(distance);
                 ToggleStreetsHighlighting(streets);
-            }
-        }
-
-        private void BtnReconnect_Click(object sender, RoutedEventArgs e)
-        {
-            try
-            {
-                db.IP = comboBox.SelectedIndex == 1 ? "212.152.179.117" : "192.168.128.152";
-                db.CreateConnection();
-                ReloadAllData();
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show(ex.Message);
             }
         }
 
@@ -147,16 +149,21 @@ namespace RoadMap
                 obsStreets.Clear();
                 foreach (Street street in streets) obsStreets.Add(street);
             }
-        }
+        } 
+        #endregion
 
-        private void ToggleStreetsHighlighting(IList<Street> streets)
+        #region Button click handlers
+        private void BtnReconnect_Click(object sender, RoutedEventArgs e)
         {
-            foreach (Street street in highlightedStreets) streetToLineMapping[street.ID].StrokeThickness = 1;
-            highlightedStreets.Clear();
-            foreach (Street street in streets)
+            try
             {
-                highlightedStreets.Add(street);
-                streetToLineMapping[street.ID].StrokeThickness = 3;
+                db.IP = comboBox.SelectedIndex == 1 ? "212.152.179.117" : "192.168.128.152";
+                db.CreateConnection();
+                LoadAllData();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message);
             }
         }
 
@@ -191,6 +198,14 @@ namespace RoadMap
             foreach (Transport transport in db.GetTransports()) { obsTransports.Add(transport); }
         }
 
+        private void BtnRollback_Click(object sender, RoutedEventArgs e)
+        {
+            btnNewTransport.IsEnabled = true;
+            btnCommit.IsEnabled = false;
+            btnRollback.IsEnabled = false;
+            db.Rollback();
+        }
+
         private void BtnFinishTransport_Click(object sender, RoutedEventArgs e)
         {
             try
@@ -206,14 +221,7 @@ namespace RoadMap
             {
                 MessageBox.Show(ex.Message);
             }
-        }
-
-        private void BtnRollback_Click(object sender, RoutedEventArgs e)
-        {
-            btnNewTransport.IsEnabled = true;
-            btnCommit.IsEnabled = false;
-            btnRollback.IsEnabled = false;
-            db.Rollback();
-        }
+        } 
+        #endregion
     }
 }

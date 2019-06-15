@@ -44,6 +44,7 @@ namespace RoadMap
             return database;
         }
 
+        #region Get-operations
         public IList<Street> GetStreets()
         {
             SortedList<string, Street> streets = new SortedList<string, Street>();
@@ -63,6 +64,21 @@ namespace RoadMap
                         streets[id].ToPoint = givenPoint;
                 }
             return streets.Values;
+        }
+
+        public IList<Route> GetRoutes()
+        {
+            IList<Route> routes = new List<Route>();
+            OracleCommand cmd = new OracleCommand(RoutesSelect, connection);
+            OracleDataReader reader = cmd.ExecuteReader();
+            if (reader.HasRows)
+                while (reader.Read())
+                {
+                    string id = reader["rid1"].ToString();
+                    string description = reader["ABSCHNITT_BEZEICHNUNG"].ToString();
+                    routes.Add(new Route(id, description));
+                }
+            return routes;
         }
 
         public IList<Street> GetStreetsOfRoute(Route route)
@@ -141,7 +157,9 @@ namespace RoadMap
             else throw new Exception("Could not find route with ID " + rid);
             return new Route(rid, description);
         }
+        #endregion
 
+        #region Transactional transport operations
         public void TryLockStreets(IList<Street> streetsToLock)
         {
             transaction = connection.BeginTransaction();
@@ -196,21 +214,7 @@ namespace RoadMap
             str = str.Substring(0, str.Length - 2);
             OracleCommand cmd1 = new OracleCommand(StreetsRemoveTransportNr.Replace("xxx", str), connection);
             cmd1.ExecuteNonQuery();
-        }
-
-        public IList<Route> GetRoutes()
-        {
-            IList<Route> routes = new List<Route>();
-            OracleCommand cmd = new OracleCommand(RoutesSelect, connection);
-            OracleDataReader reader = cmd.ExecuteReader();
-            if (reader.HasRows)
-                while (reader.Read())
-                {
-                    string id = reader["rid1"].ToString();
-                    string description = reader["ABSCHNITT_BEZEICHNUNG"].ToString();
-                    routes.Add(new Route(id, description));
-                }
-            return routes;
-        }
+        } 
+        #endregion
     }
 }
