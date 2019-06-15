@@ -144,6 +144,7 @@ namespace RoadMap
 
         public void TryLockStreets(IList<Street> streetsToLock)
         {
+            transaction = connection.BeginTransaction();
             //look up if there isn't a transportNr somewhere
             string str = "(";
             foreach (Street street in streetsToLock) str += "'" + street.ID + "', ";
@@ -162,9 +163,14 @@ namespace RoadMap
             str = "";
             foreach (Street street in streetsToLock) str += "'" + street.ID + "', ";
             str = str.Substring(0, str.Length - 2);
-            transaction = connection.BeginTransaction();
+            //transaction?.Commit();
             OracleCommand cmd1 = new OracleCommand(SelectForUpdate.Replace("xxx", str), connection);
             cmd1.ExecuteNonQuery();
+        }
+
+        public void Rollback()
+        {
+            transaction.Rollback();
         }
 
         public void InsertTransport(IList<Street> lockedStreets, Route route)

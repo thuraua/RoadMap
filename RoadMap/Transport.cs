@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace RoadMap
 {
-    public class Transport
+    public class Transport : IEquatable<Transport>
     {
         public int TNR { get; set; }
         public Route Route { get; set; }
@@ -15,9 +15,36 @@ namespace RoadMap
             Route = r;
             Status = status;
         }
+
         public override string ToString()
         {
             return "Transportnummer: " + TNR + ", Route: " + Route.RID + ", " + ((Status == TransportStatus.Active) ? "aktiv" : "finished");
+        }
+
+        public override bool Equals(object obj)
+        {
+            return Equals(obj as Transport);
+        }
+
+        public bool Equals(Transport other)
+        {
+            return other != null &&
+                   TNR == other.TNR;
+        }
+
+        public override int GetHashCode()
+        {
+            return -680258025 + TNR.GetHashCode();
+        }
+
+        public static bool operator ==(Transport left, Transport right)
+        {
+            return EqualityComparer<Transport>.Default.Equals(left, right);
+        }
+
+        public static bool operator !=(Transport left, Transport right)
+        {
+            return !(left == right);
         }
     }
 

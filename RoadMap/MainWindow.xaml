@@ -29,8 +29,8 @@
             </DataGrid.Columns>
         </DataGrid>
         <Label x:Name="lblDistance" Content="" HorizontalAlignment="Stretch" Margin="10,10,9,10" VerticalAlignment="Stretch" Grid.Column="2"/>
-        <Button x:Name="btnNewTransport" Content="New Transport" Grid.Column="2" HorizontalAlignment="Stretch" Margin="10,10,10,139" VerticalAlignment="Top" Grid.Row="2" Click="BtnNewTransport_Click"/>
-        <Button x:Name="btnFinishTransport" Content="Finish Transport" Grid.Column="2" HorizontalAlignment="Stretch" Margin="10,60,10,0" Grid.Row="2" VerticalAlignment="Top" Click="BtnFinishTransport_Click"/>
+        <Button x:Name="btnNewTransport" Content="New Transport (lock route)" Grid.Column="2" HorizontalAlignment="Stretch" Margin="10,10,10,139" VerticalAlignment="Top" Grid.Row="2" Click="BtnNewTransport_Click"/>
+        <Button x:Name="btnFinishTransport" Content="Finish Transport" Grid.Column="2" HorizontalAlignment="Stretch" Margin="10,85,10,0" Grid.Row="2" VerticalAlignment="Top" Click="BtnFinishTransport_Click"/>
         <DataGrid x:Name="dgStreets" Grid.Column="1" HorizontalAlignment="Stretch" Margin="10" Grid.Row="2" VerticalAlignment="Stretch" SelectionChanged="DgStreets_SelectionChanged" AutoGenerateColumns="False" IsReadOnly="True">
             <DataGrid.Columns>
                 <DataGridTextColumn Header="ID" Width="*" Binding="{Binding ID}"/>
@@ -42,8 +42,9 @@
             <RadioButton Content="Intern"/>
             <RadioButton Content="Extern" IsChecked="True"/>
         </ComboBox>
-        <Button x:Name="btnReconnect" Content="Reconnect" HorizontalAlignment="Left" Margin="135,10,0,0" VerticalAlignment="Top" Width="75" Height="25" Click="BtnReconnect_Click"/>
+        <Button x:Name="btnReconnect" Content="Reconnect / Refresh" HorizontalAlignment="Left" Margin="135,10,0,0" VerticalAlignment="Top" Width="118" Height="25" Click="BtnReconnect_Click"/>
         <Label x:Name="lblCvMapHoverInfo" Content="" Grid.Column="1" HorizontalAlignment="Stretch" Margin="15,10,10,0" VerticalAlignment="Top"/>
         <Button x:Name="btnCommit" Content="Commit" Grid.Column="2" HorizontalAlignment="Stretch" Margin="10,35,10,0" Grid.Row="2" VerticalAlignment="Top" Click="BtnCommit_Click" IsEnabled="False"/>
+        <Button x:Name="btnRollback" Content="Rollback" Grid.Column="2" HorizontalAlignment="Stretch" Margin="10,60,10,0" Grid.Row="2" VerticalAlignment="Top" Click="BtnRollback_Click" IsEnabled="False"/>
     </Grid>
 </Window>

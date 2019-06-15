@@ -21,9 +21,7 @@ namespace RoadMap
 
         public bool Equals(Route other)
         {
-            return other != null &&
-                   RID == other.RID &&
-                   AbschnittBezeichnung == other.AbschnittBezeichnung;
+            return other != null && RID == other.RID;
         }
 
         public override int GetHashCode()

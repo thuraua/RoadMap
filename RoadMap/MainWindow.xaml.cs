@@ -14,17 +14,16 @@ namespace RoadMap
     public partial class MainWindow : Window
     {
         private Database db;
-        private IList<Street> streets;
+        private IList<Street> allStreets;
+        private IList<Street> highlightedStreets = new List<Street>();
+        private IList<Street> lockedStreets;
+        private Route lockedRoute;
         private IDictionary<string, Line> streetToLineMapping = new Dictionary<string, Line>();
         private ObservableCollection<Transport> obsTransports = new ObservableCollection<Transport>();
         private ObservableCollection<Route> obsRoutes = new ObservableCollection<Route>();
         private ObservableCollection<Street> obsStreets = new ObservableCollection<Street>();
-        private IList<Line> streetsOfSelectedTransport = new List<Line>();
-        private IList<Street> highlightedStreets = new List<Street>();
         private double sizeFactorX = 1;
         private double sizeFactorY = 1;
-        private IList<Street> lockedStreets;
-        private Route lockedRoute;
 
         public MainWindow()
         {
@@ -32,13 +31,10 @@ namespace RoadMap
             try
             {
                 db = Database.GetInstance();
-                streets = db.GetStreets();
-                DrawStreets();
                 dgTransports.ItemsSource = obsTransports;
                 dgRoutes.ItemsSource = obsRoutes;
                 dgStreets.ItemsSource = obsStreets;
-                foreach (Transport transport in db.GetTransports()) { obsTransports.Add(transport); }
-                foreach (Route route in db.GetRoutes()) { obsRoutes.Add(route); }
+                ReloadAllData();
             }
             catch (Exception ex)
             {
@@ -46,12 +42,24 @@ namespace RoadMap
             }
         }
 
+        private void ReloadAllData()
+        {
+            allStreets = db.GetStreets();
+            DrawStreets();
+            obsTransports.Clear();
+            obsRoutes.Clear();
+            obsStreets.Clear();
+            foreach (Transport transport in db.GetTransports()) { obsTransports.Add(transport); }
+            foreach (Route route in db.GetRoutes()) { obsRoutes.Add(route); }
+        }
+
         private void DrawStreets()
         {
             if (cvMap.ActualWidth != 0 && cvMap.ActualHeight != 0)
             {
                 cvMap.Children.Clear();
-                foreach (Street street in streets)
+                streetToLineMapping.Clear();
+                foreach (Street street in allStreets)
                 {
                     Line line = new Line();
                     if (street.From.StartsWith("A"))
@@ -88,7 +96,7 @@ namespace RoadMap
         {
             cvMap.Width = (border.ActualWidth < border.ActualHeight * 2 ? border.ActualWidth : border.ActualHeight * 2) - 20;
             cvMap.Height = (border.ActualHeight * 2 < border.ActualWidth ? border.ActualHeight : border.ActualWidth / 2) - 20;
-            if (streets != null)
+            if (allStreets != null)
                 DrawStreets();
         }
 
@@ -110,6 +118,7 @@ namespace RoadMap
             {
                 db.IP = comboBox.SelectedIndex == 1 ? "212.152.179.117" : "192.168.128.152";
                 db.CreateConnection();
+                ReloadAllData();
             }
             catch (Exception ex)
             {
@@ -161,12 +170,14 @@ namespace RoadMap
                 db.TryLockStreets(streetsToLock);
                 btnNewTransport.IsEnabled = false;
                 btnCommit.IsEnabled = true;
+                btnRollback.IsEnabled = true;
                 lockedStreets = streetsToLock;
                 lockedRoute = selectedRoute;
             }
             catch (Exception ex)
             {
                 MessageBox.Show(ex.Message);
+                db.Rollback();
             }
         }
 
@@ -174,6 +185,7 @@ namespace RoadMap
         {
             btnNewTransport.IsEnabled = true;
             btnCommit.IsEnabled = false;
+            btnRollback.IsEnabled = false;
             db.InsertTransport(lockedStreets, lockedRoute);
             obsTransports.Clear();
             foreach (Transport transport in db.GetTransports()) { obsTransports.Add(transport); }
@@ -194,6 +206,14 @@ namespace RoadMap
             {
                 MessageBox.Show(ex.Message);
             }
+        }
+
+        private void BtnRollback_Click(object sender, RoutedEventArgs e)
+        {
+            btnNewTransport.IsEnabled = true;
+            btnCommit.IsEnabled = false;
+            btnRollback.IsEnabled = false;
+            db.Rollback();
         }
     }
 }

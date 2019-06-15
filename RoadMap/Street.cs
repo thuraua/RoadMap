@@ -1,11 +1,13 @@
-﻿using System.Windows;
+﻿using System;
+using System.Collections.Generic;
+using System.Windows;
 
 namespace RoadMap
 {
     /// <summary>
     /// Represents table 'Teilstrecke'
     /// </summary>
-    public class Street
+    public class Street : IEquatable<Street>
     {
         public string ID { get; set; }
         public string From { get; set; }
@@ -44,11 +46,37 @@ namespace RoadMap
             ID = id;
             From = from;
             To = to;
-        }
+        }  
 
         public override string ToString()
         {
             return ID + ", From: " + From + ", To:" + To;
+        }
+
+        public override bool Equals(object obj)
+        {
+            return Equals(obj as Street);
+        }
+
+        public bool Equals(Street other)
+        {
+            return other != null &&
+                   ID == other.ID;
+        }
+
+        public override int GetHashCode()
+        {
+            return 1213502048 + EqualityComparer<string>.Default.GetHashCode(ID);
+        }
+
+        public static bool operator ==(Street left, Street right)
+        {
+            return EqualityComparer<Street>.Default.Equals(left, right);
+        }
+
+        public static bool operator !=(Street left, Street right)
+        {
+            return !(left == right);
         }
     }
 }
