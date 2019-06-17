@@ -111,7 +111,10 @@ namespace RoadMap
             cvMap.Width = (border.ActualWidth < border.ActualHeight * 2 ? border.ActualWidth : border.ActualHeight * 2) - 20;
             cvMap.Height = (border.ActualHeight * 2 < border.ActualWidth ? border.ActualHeight : border.ActualWidth / 2) - 20;
             if (allStreets != null)
+            {
                 DrawStreets();
+                DgRoutes_SelectionChanged(null, null);
+            }
         }
         #endregion
 
