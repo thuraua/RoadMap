@@ -38,9 +38,9 @@
                 <DataGridTextColumn Header="To" Width="3*" Binding="{Binding To}"/>
             </DataGrid.Columns>
         </DataGrid>
-        <ComboBox x:Name="comboBox" HorizontalAlignment="Left" Margin="10,10,0,0" VerticalAlignment="Top" Width="120" Height="25" SelectedIndex="1">
-            <RadioButton Content="Intern"/>
-            <RadioButton Content="Extern" IsChecked="True"/>
+        <ComboBox x:Name="comboBox" HorizontalAlignment="Left" Margin="10,10,0,0" VerticalAlignment="Top" Width="120" Height="25" SelectedIndex="0">
+            <RadioButton Content="Intern" IsChecked="True"/>
+            <RadioButton Content="Extern"/>
         </ComboBox>
         <Button x:Name="btnReconnect" Content="Reconnect / Refresh" HorizontalAlignment="Left" Margin="135,10,0,0" VerticalAlignment="Top" Width="118" Height="25" Click="BtnReconnect_Click"/>
         <Label x:Name="lblCvMapHoverInfo" Content="" Grid.Column="1" HorizontalAlignment="Stretch" Margin="15,10,10,0" VerticalAlignment="Top"/>

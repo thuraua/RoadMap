@@ -7,7 +7,7 @@ namespace RoadMap
 {
     public class Database
     {
-        public string IP { get; set; } = "212.152.179.117"; //"212.152.179.117" "192.168.128.152"
+        public string IP { get; set; } = "192.168.128.152"; //"212.152.179.117" "192.168.128.152"
         private OracleConnection connection;
         private static Database database;
         private OracleTransaction transaction;

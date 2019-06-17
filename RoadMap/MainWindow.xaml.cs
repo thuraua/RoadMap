@@ -91,7 +91,7 @@ namespace RoadMap
                 highlightedStreets.Add(street);
                 streetToLineMapping[street.ID].StrokeThickness = 3;
             }
-        } 
+        }
         #endregion
 
         #region CvMap resizement/dimensions
@@ -149,7 +149,7 @@ namespace RoadMap
                 obsStreets.Clear();
                 foreach (Street street in streets) obsStreets.Add(street);
             }
-        } 
+        }
         #endregion
 
         #region Button click handlers
@@ -184,7 +184,8 @@ namespace RoadMap
             catch (Exception ex)
             {
                 MessageBox.Show(ex.Message);
-                db.Rollback();
+                if (!ex.Message.Contains("select"))
+                    db.Rollback();
             }
         }
 
@@ -221,7 +222,7 @@ namespace RoadMap
             {
                 MessageBox.Show(ex.Message);
             }
-        } 
+        }
         #endregion
     }
 }
