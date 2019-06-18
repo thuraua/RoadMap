@@ -227,5 +227,13 @@ namespace RoadMap
             }
         }
         #endregion
+
+        private void BtnB_Click(object sender, RoutedEventArgs e)
+        {
+            Route route=db.GetShortestAvailableRouteKluVil(out bool status);
+            if (route == null) MessageBox.Show("no route awailable");
+            txtInfo.Text = "Shortest route: " + route.RID + ", " + route.AbschnittBezeichnung+"\n";
+            txtInfo.Text += "Status: " + (status == true ? "free" : "selected");
+        }
     }
 }

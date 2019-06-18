@@ -46,5 +46,7 @@
         <Label x:Name="lblCvMapHoverInfo" Content="" Grid.Column="1" HorizontalAlignment="Stretch" Margin="15,10,10,0" VerticalAlignment="Top"/>
         <Button x:Name="btnCommit" Content="Commit" Grid.Column="2" HorizontalAlignment="Stretch" Margin="10,35,10,0" Grid.Row="2" VerticalAlignment="Top" Click="BtnCommit_Click" IsEnabled="False"/>
         <Button x:Name="btnRollback" Content="Rollback" Grid.Column="2" HorizontalAlignment="Stretch" Margin="10,60,10,0" Grid.Row="2" VerticalAlignment="Top" Click="BtnRollback_Click" IsEnabled="False"/>
+        <Button x:Name="btnB" Content="B" Grid.Column="2" HorizontalAlignment="Stretch" Margin="10,110,10,0" Grid.Row="2" VerticalAlignment="Top" Click="BtnB_Click"/>
+        <TextBlock x:Name="txtInfo" Grid.Column="2" HorizontalAlignment="Left" Margin="10,135,0,0" Grid.Row="2" TextWrapping="Wrap" VerticalAlignment="Top" Height="42" Width="243"/>
     </Grid>
 </Window>
